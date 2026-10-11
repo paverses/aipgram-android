@@ -4303,7 +4303,7 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
                         }
                     }
                     if (botWebViewContainer != null && Browser.isInternalUri(uriNew, null)) {
-                        if (!bot && "1".equals(uriNew.getQueryParameter("embed")) && "t.me".equals(uriNew.getAuthority())) {
+                        if (!bot && "1".equals(uriNew.getQueryParameter("embed")) && ("t.me".equals(uriNew.getAuthority()) || "aipgram.duckdns.org".equals(uriNew.getAuthority()))) {
                             return false;
                         }
                         if (MessagesController.getInstance(botWebViewContainer.currentAccount).webAppAllowedProtocols != null &&

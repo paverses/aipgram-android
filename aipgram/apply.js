@@ -9,6 +9,7 @@ const APP_ID = 90000001;
 const APP_HASH = "6f0c7ab1a4e3d2b58c91f07e5d34a2c1"; // gramsrv does not check it; any 32 hex chars
 const PACKAGE = "org.aipgram.messenger";
 const APP_NAME = "AIPGram";
+const LINK_HOST = "aipgram.duckdns.org"; // public links (t.me on Telegram)
 const RSA_KEY = [
   "-----BEGIN RSA PUBLIC KEY-----",
   "MIIBCgKCAQEAuwI+651GHh3hcvtJZmZbFw6KvldOtxcsdBe95Woa6mnRoIz4xQBq",
@@ -32,6 +33,14 @@ function edit(rel, fn) {
   }
   fs.writeFileSync(file, after);
   console.log("patched  ", rel);
+}
+function walkJava(dir, out = []) {
+  for (const entry of fs.readdirSync(dir, {withFileTypes: true})) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) walkJava(full, out);
+    else if (entry.name.endsWith(".java")) out.push(full);
+  }
+  return out;
 }
 function mustReplace(text, re, replacement, what) {
   if (!re.test(text)) throw new Error("pattern not found: " + what);
@@ -99,7 +108,28 @@ edit("TMessagesProj_App/google-services.json", (t) => {
   return JSON.stringify(json, null, 2) + "\n";
 });
 
-// 6. App name.
+// 6. Public links live on our domain instead of t.me: the fallback prefix before the server config
+//    arrives, the intent filter for links opened from other apps, and every hard-coded host check.
+edit("TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java", (t) =>
+  t.replace(`getString("linkPrefix", "t.me")`, `getString("linkPrefix", "${LINK_HOST}")`));
+edit("TMessagesProj/src/main/AndroidManifest.xml", (t) => {
+  if (t.includes(`android:host="${LINK_HOST}"`)) return t;
+  return mustReplace(t, /( *)<data android:host="t\.me" android:scheme="https" \/>\n/,
+    (m, indent) => m + `${indent}<data android:host="${LINK_HOST}" android:scheme="http" />\n${indent}<data android:host="${LINK_HOST}" android:scheme="https" />\n`,
+    "t.me intent filter");
+});
+for (const file of walkJava(path.join(root, "TMessagesProj/src/main/java"))) {
+  edit(path.relative(root, file), (t) => {
+    if (!t.includes('"t.me"') || t.includes(`"${LINK_HOST}".equals`) || t.includes(`.equals("${LINK_HOST}")`)) return t;
+    return t
+      .replace(/"t\.me"\.(equals|equalsIgnoreCase)\(([^()]*(?:\([^()]*\))?)\)/g,
+        (m, eq, arg) => `(${m} || "${LINK_HOST}".${eq}(${arg}))`)
+      .replace(/([A-Za-z_][\w.]*(?:\(\))?)\.(equals|equalsIgnoreCase)\("t\.me"\)/g,
+        (m, recv, eq) => `(${m} || ${recv}.${eq}("${LINK_HOST}"))`);
+  });
+}
+
+// 7. App name.
 edit("TMessagesProj/src/main/res/values/strings.xml", (t) => {
   t = mustReplace(t, /<string name="AppName">[^<]*<\/string>/, `<string name="AppName">${APP_NAME}</string>`, "AppName");
   return mustReplace(t, /<string name="AppNameBeta">[^<]*<\/string>/, `<string name="AppNameBeta">${APP_NAME} Beta</string>`, "AppNameBeta");

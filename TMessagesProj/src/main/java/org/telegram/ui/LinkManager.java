@@ -104,7 +104,7 @@ public class LinkManager {
         if (host == null) return false;
         final Matcher prefixMatcher = LaunchActivity.PREFIX_T_ME_PATTERN.matcher(host.toLowerCase());
         final boolean isPrefix = prefixMatcher.find();
-        if (!"telegram.me".equalsIgnoreCase(host) && !"t.me".equalsIgnoreCase(host) && !"telegram.dog".equalsIgnoreCase(host) && !isPrefix)
+        if (!"telegram.me".equalsIgnoreCase(host) && !("t.me".equalsIgnoreCase(host) || "aipgram.duckdns.org".equalsIgnoreCase(host)) && !"telegram.dog".equalsIgnoreCase(host) && !isPrefix)
             return false;
 
         if (isPrefix) {
@@ -1513,7 +1513,7 @@ public class LinkManager {
                     String host = uri.getHost().toLowerCase();
                     Matcher prefixMatcher = LaunchActivity.PREFIX_T_ME_PATTERN.matcher(host);
                     boolean isPrefix = prefixMatcher.find();
-                    if (host.equals("telegram.me") || host.equals("t.me") || host.equals("telegram.dog") || isPrefix) {
+                    if (host.equals("telegram.me") || (host.equals("t.me") || host.equals("aipgram.duckdns.org")) || host.equals("telegram.dog") || isPrefix) {
                         ArrayList<String> segments = new ArrayList<>(uri.getPathSegments());
                         if (segments.size() > 0 && segments.get(0).equals("s")) {
                             segments.remove(0);
