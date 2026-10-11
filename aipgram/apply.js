@@ -1,4 +1,4 @@
-// Points the DrKLO/Telegram Android sources at the AIPGram server (gramsrv) and rebrands the app.
+// Points the DrKLO/Telegram Android sources at the Airagram server (gramsrv) and rebrands the app.
 // Idempotent: run `node aipgram/apply.js` from the repository root, also after merging upstream.
 const fs = require("fs");
 const path = require("path");
@@ -7,9 +7,10 @@ const SERVER_IP = "2.27.200.223";
 const SERVER_PORT = 2398;
 const APP_ID = 90000001;
 const APP_HASH = "6f0c7ab1a4e3d2b58c91f07e5d34a2c1"; // gramsrv does not check it; any 32 hex chars
-const PACKAGE = "org.aipgram.messenger";
-const APP_NAME = "AIPGram";
-const LINK_HOST = "aipgram.duckdns.org"; // public links (t.me on Telegram)
+const PACKAGE = "org.airagram.messenger";
+const APP_NAME = "Airagram";
+const LINK_HOST = "airagram.duckdns.org"; // public links (t.me on Telegram)
+const OLD_LINK_HOST = "aipgram.duckdns.org"; // previous domain, still opened in the app
 const RSA_KEY = [
   "-----BEGIN RSA PUBLIC KEY-----",
   "MIIBCgKCAQEAuwI+651GHh3hcvtJZmZbFw6KvldOtxcsdBe95Woa6mnRoIz4xQBq",
@@ -88,7 +89,7 @@ edit("TMessagesProj/jni/tgnet/Handshake.cpp", (t) => {
 edit("TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java", (t) => {
   t = mustReplace(t, /public static int APP_ID = \d+;/, `public static int APP_ID = ${APP_ID};`, "APP_ID");
   t = mustReplace(t, /public static String APP_HASH = "[0-9a-f]*";/, `public static String APP_HASH = "${APP_HASH}";`, "APP_HASH");
-  return t.replace(/"org\.telegram\.messenger\.beta"\.equals/, `"${PACKAGE}.beta".equals`);
+  return t.replace(/"org\.(telegram|aipgram)\.messenger\.beta"\.equals/, `"${PACKAGE}.beta".equals`);
 });
 
 // 4. Package name, so the app installs next to the official Telegram.
@@ -110,8 +111,9 @@ edit("TMessagesProj_App/google-services.json", (t) => {
 
 // 6. Public links live on our domain instead of t.me: the fallback prefix before the server config
 //    arrives, the intent filter for links opened from other apps, and every hard-coded host check.
-edit("TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java", (t) =>
-  t.replace(`getString("linkPrefix", "t.me")`, `getString("linkPrefix", "${LINK_HOST}")`));
+edit("TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java", (t) => t
+  .replace(`getString("linkPrefix", "t.me")`, `getString("linkPrefix", "${LINK_HOST}")`)
+  .replace(`getString("linkPrefix", "${OLD_LINK_HOST}")`, `getString("linkPrefix", "${LINK_HOST}")`));
 edit("TMessagesProj/src/main/AndroidManifest.xml", (t) => {
   if (t.includes(`android:host="${LINK_HOST}"`)) return t;
   return mustReplace(t, /( *)<data android:host="t\.me" android:scheme="https" \/>\n/,
@@ -143,3 +145,75 @@ edit("TMessagesProj/src/main/res/values/strings.xml", (t) => {
   t = mustReplace(t, /<string name="AppName">[^<]*<\/string>/, `<string name="AppName">${APP_NAME}</string>`, "AppName");
   return mustReplace(t, /<string name="AppNameBeta">[^<]*<\/string>/, `<string name="AppNameBeta">${APP_NAME} Beta</string>`, "AppNameBeta");
 });
+
+
+// 8. airagram:// opens like tg:// as well (aipgram:// from the old link pages keeps working).
+edit("TMessagesProj/src/main/AndroidManifest.xml", (t) => t.includes('android:scheme="airagram"') ? t :
+  mustReplace(t, /( *)<data android:scheme="tg" \/>\n/, (m, indent) => m + `${indent}<data android:scheme="airagram" />\n`, "tg scheme filter"));
+edit("TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java", (t) => t.includes('"airagram".equalsIgnoreCase') ? t :
+  mustReplace(t,
+    /Uri data = intent\.getData\(\) != null && "aipgram"\.equalsIgnoreCase\(intent\.getData\(\)\.getScheme\(\)\)\n(\s*)\? Uri\.parse\("tg" \+ intent\.getData\(\)\.toString\(\)\.substring\("aipgram"\.length\(\)\)\)/,
+    (m, indent) => 'Uri data = intent.getData() != null && ("aipgram".equalsIgnoreCase(intent.getData().getScheme()) || "airagram".equalsIgnoreCase(intent.getData().getScheme()))\n' +
+      indent + '? Uri.parse("tg" + intent.getData().toString().substring(intent.getData().getScheme().length()))', "LaunchActivity scheme"));
+
+// 9. Own launcher icon instead of the Telegram plane (rendered by aipgram/branding/make_icons.py).
+{
+  const res = path.join(root, "TMessagesProj/src/main/res");
+  const brand = path.join(__dirname, "branding/res");
+  for (const dir of fs.readdirSync(brand)) {
+    if (!dir.startsWith("mipmap-")) continue;
+    for (const file of fs.readdirSync(path.join(brand, dir))) {
+      fs.copyFileSync(path.join(brand, dir, file), path.join(res, dir, file));
+    }
+    // every launcher bitmap variant (default and alternate icons) becomes the Airagram icon
+    for (const file of fs.readdirSync(path.join(res, dir))) {
+      if (!/^(ic_launcher|icon_\d+_launcher)(_round)?\.png$/.test(file)) continue;
+      const src = file.includes("_round") ? "airagram_launcher_round.png" : "airagram_launcher.png";
+      fs.copyFileSync(path.join(brand, dir, src), path.join(res, dir, file));
+    }
+  }
+  const adaptive = path.join(res, "mipmap-anydpi-v26");
+  for (const file of fs.readdirSync(adaptive)) {
+    if (!file.endsWith(".xml")) continue;
+    edit(path.relative(root, path.join(adaptive, file)), () => [
+      '<?xml version="1.0" encoding="utf-8"?>',
+      '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">',
+      '    <background android:drawable="@mipmap/airagram_background" />',
+      '    <foreground android:drawable="@mipmap/airagram_foreground" />',
+      '    <monochrome android:drawable="@mipmap/airagram_foreground" />',
+      '</adaptive-icon>',
+      ''].join("\n"));
+  }
+  console.log("copied    launcher icons");
+}
+
+// 10. Drop permissions a messenger without calls or self-updates does not need; antivirus heuristics
+//     treat them (installing packages, overlays, background location, phone control) as spyware signals.
+const REMOVED_PERMISSIONS = ["REQUEST_INSTALL_PACKAGES", "INSTALL_PACKAGES", "SYSTEM_ALERT_WINDOW", "CALL_PHONE",
+  "READ_PHONE_NUMBERS", "READ_PHONE_STATE", "READ_CALL_LOG", "ACCESS_BACKGROUND_LOCATION", "MANAGE_OWN_CALLS"];
+edit("TMessagesProj_App/src/main/AndroidManifest.xml", (t) => {
+  if (t.includes("Airagram: permissions removed")) return t;
+  const lines = REMOVED_PERMISSIONS.map((name) =>
+    `    <uses-permission android:name="android.permission.${name}" tools:node="remove" />`).join("\n");
+  return mustReplace(t, /(android:installLocation="auto">\n)/, `$1\n    <!-- Airagram: permissions removed from the merged manifest -->\n${lines}\n`, "app manifest");
+});
+
+// 11. Release signing with the Airagram key when CI provides it (AIRAGRAM_KEYSTORE / AIRAGRAM_KEYSTORE_PASSWORD),
+//     never with the public Telegram keystore that malware clones also use.
+edit("TMessagesProj_App/build.gradle", (t) => t.includes("AIRAGRAM_KEYSTORE") ? t :
+  mustReplace(t, /        release \{\n            storeFile file\("\.\.\/TMessagesProj\/config\/release\.keystore"\)\n            storePassword RELEASE_STORE_PASSWORD\n            keyAlias RELEASE_KEY_ALIAS\n            keyPassword RELEASE_KEY_PASSWORD\n        \}/,
+    [
+      "        release {",
+      '            def airagramKeystore = System.getenv("AIRAGRAM_KEYSTORE")',
+      '            storeFile file(airagramKeystore ?: "../TMessagesProj/config/release.keystore")',
+      '            storePassword airagramKeystore ? System.getenv("AIRAGRAM_KEYSTORE_PASSWORD") : RELEASE_STORE_PASSWORD',
+      '            keyAlias airagramKeystore ? "airagram" : RELEASE_KEY_ALIAS',
+      '            keyPassword airagramKeystore ? System.getenv("AIRAGRAM_KEYSTORE_PASSWORD") : RELEASE_KEY_PASSWORD',
+      "        }",
+    ].join("\n"), "release signing config"));
+
+// 12. Native code goes through ccache when CI provides it, so unchanged C/C++ is not recompiled every build.
+edit("TMessagesProj/build.gradle", (t) => t.includes("CMAKE_C_COMPILER_LAUNCHER") ? t :
+  mustReplace(t, /(externalNativeBuild \{\n\s+cmake \{\n\s+version '[^']+'\n\s+arguments )/,
+    `$1'-DCMAKE_C_COMPILER_LAUNCHER=' + (System.getenv("AIRAGRAM_CCACHE") ?: ''), '-DCMAKE_CXX_COMPILER_LAUNCHER=' + (System.getenv("AIRAGRAM_CCACHE") ?: ''), `,
+    "cmake arguments"));

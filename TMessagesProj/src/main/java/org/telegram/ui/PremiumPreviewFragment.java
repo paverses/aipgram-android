@@ -1165,7 +1165,7 @@ public class PremiumPreviewFragment extends BaseFragment implements Notification
                     }
                 } else {
                     final Uri uri = Uri.parse(selectedTier.subscriptionOption.bot_url);
-                    if ((uri.getHost().equals("t.me") || uri.getHost().equals("aipgram.duckdns.org"))) {
+                    if (((uri.getHost().equals("t.me") || uri.getHost().equals("airagram.duckdns.org")) || uri.getHost().equals("aipgram.duckdns.org"))) {
                         if (!uri.getPath().startsWith("/$") && !uri.getPath().startsWith("/invoice/")) {
                             launchActivity.setNavigateToPremiumBot(true);
                         }

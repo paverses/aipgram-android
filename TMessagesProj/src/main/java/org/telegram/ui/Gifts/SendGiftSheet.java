@@ -832,7 +832,7 @@ public class SendGiftSheet extends BottomSheetWithRecyclerListView implements No
                 final LaunchActivity activity = LaunchActivity.instance;
                 if (activity != null) {
                     Uri uri = Uri.parse(o.bot_url);
-                    if ((uri.getHost().equals("t.me") || uri.getHost().equals("aipgram.duckdns.org"))) {
+                    if (((uri.getHost().equals("t.me") || uri.getHost().equals("airagram.duckdns.org")) || uri.getHost().equals("aipgram.duckdns.org"))) {
                         if (!uri.getPath().startsWith("/$") && !uri.getPath().startsWith("/invoice/")) {
                             activity.setNavigateToPremiumBot(true);
                         } else {

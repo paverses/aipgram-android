@@ -724,7 +724,7 @@ public class Browser {
                 }
                 return true;
             }
-        } else if ("telegram.me".equals(host) || ("t.me".equals(host) || "aipgram.duckdns.org".equals(host))) {
+        } else if ("telegram.me".equals(host) || (("t.me".equals(host) || "airagram.duckdns.org".equals(host)) || "aipgram.duckdns.org".equals(host))) {
             String path = uri.getPath();
             if (path != null && path.length() > 1) {
                 if (all) {

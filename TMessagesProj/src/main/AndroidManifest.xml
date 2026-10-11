@@ -264,6 +264,8 @@
                 <data android:host="telegram.dog" android:scheme="https" />
                 <data android:host="t.me" android:scheme="http" />
                 <data android:host="t.me" android:scheme="https" />
+                <data android:host="airagram.duckdns.org" android:scheme="http" />
+                <data android:host="airagram.duckdns.org" android:scheme="https" />
                 <data android:host="aipgram.duckdns.org" android:scheme="http" />
                 <data android:host="aipgram.duckdns.org" android:scheme="https" />
             </intent-filter>
@@ -278,6 +280,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="tg" />
+                <data android:scheme="airagram" />
                 <data android:scheme="aipgram" />
             </intent-filter>
             <intent-filter>

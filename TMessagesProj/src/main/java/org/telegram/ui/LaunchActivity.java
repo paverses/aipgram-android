@@ -1883,8 +1883,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     }
                 } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
                     // AIPGram: aipgram:// links from our public pages behave like tg:// ones
-                    Uri data = intent.getData() != null && "aipgram".equalsIgnoreCase(intent.getData().getScheme())
-                            ? Uri.parse("tg" + intent.getData().toString().substring("aipgram".length()))
+                    Uri data = intent.getData() != null && ("aipgram".equalsIgnoreCase(intent.getData().getScheme()) || "airagram".equalsIgnoreCase(intent.getData().getScheme()))
+                            ? Uri.parse("tg" + intent.getData().toString().substring(intent.getData().getScheme().length()))
                             : intent.getData();
 
                     final LinkManager linkManager = new LinkManager(this, intentAccount[0], progress, openedTelegram);
@@ -1970,7 +1970,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                     String host = data.getHost().toLowerCase();
                                     Matcher prefixMatcher = PREFIX_T_ME_PATTERN.matcher(host);
                                     boolean isPrefix = prefixMatcher.find();
-                                    if (host.equals("telegram.me") || (host.equals("t.me") || host.equals("aipgram.duckdns.org")) || host.equals("telegram.dog") || isPrefix) {
+                                    if (host.equals("telegram.me") || ((host.equals("t.me") || host.equals("airagram.duckdns.org")) || host.equals("aipgram.duckdns.org")) || host.equals("telegram.dog") || isPrefix) {
                                         if (isPrefix) {
                                             data = Uri.parse("https://t.me/" + prefixMatcher.group(1) + (TextUtils.isEmpty(data.getPath()) ? "" : data.getPath()) + (TextUtils.isEmpty(data.getQuery()) ? "" : "?" + data.getQuery()));
                                         }

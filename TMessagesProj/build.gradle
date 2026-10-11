@@ -150,7 +150,7 @@ android {
         externalNativeBuild {
             cmake {
                 version '3.22.1'
-                arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-21' //, '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
+                arguments '-DCMAKE_C_COMPILER_LAUNCHER=' + (System.getenv("AIRAGRAM_CCACHE") ?: ''), '-DCMAKE_CXX_COMPILER_LAUNCHER=' + (System.getenv("AIRAGRAM_CCACHE") ?: ''), '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-21' //, '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
                 targets 'tmessages.49'
             }
         }

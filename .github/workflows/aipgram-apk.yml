@@ -1,4 +1,4 @@
-name: AIPGram APK
+name: Airagram APK
 
 on:
   push:
@@ -27,16 +27,43 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "platforms;android-36" "build-tools;36.0.0" > /dev/null
 
-      - name: Apply AIPGram configuration
+      - name: Apply Airagram configuration
         run: node aipgram/apply.js
 
+      # Native code (tgnet, codecs, ...) is most of the build time; ccache keeps unchanged objects between runs.
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: airagram-apk-ndk
+          max-size: 3G
+
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.AIRAGRAM_KEYSTORE_B64 }}
+        run: |
+          [ -n "$KEYSTORE_B64" ] || { echo "AIRAGRAM_KEYSTORE_B64 secret is missing"; exit 1; }
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/airagram.p12"
+          echo "AIRAGRAM_KEYSTORE=$RUNNER_TEMP/airagram.p12" >> "$GITHUB_ENV"
 
       - name: Build APK
-        run: ./gradlew :TMessagesProj_App:assembleAfatRelease --no-daemon --stacktrace "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g"
+        env:
+          AIRAGRAM_KEYSTORE_PASSWORD: ${{ secrets.AIRAGRAM_KEYSTORE_PASSWORD }}
+          AIRAGRAM_CCACHE: ccache
+        run: ./gradlew :TMessagesProj_App:assembleAfatRelease --no-daemon --build-cache --stacktrace "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g"
+
+      - name: Collect APK
+        run: |
+          mkdir -p artifacts
+          APK=$(find TMessagesProj_App/build/outputs/apk -name "*.apk" | head -1)
+          cp "$APK" artifacts/Airagram.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs artifacts/Airagram.apk | head -5
+          ccache -s | head -20 || true
 
       - uses: actions/upload-artifact@v4
         with:
-          name: aipgram-android-apk
-          path: TMessagesProj_App/build/outputs/apk/**/*.apk
+          name: airagram-android-apk
+          path: artifacts/Airagram.apk
           if-no-files-found: error

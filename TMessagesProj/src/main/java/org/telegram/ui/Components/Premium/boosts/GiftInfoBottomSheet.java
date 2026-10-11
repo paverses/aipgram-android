@@ -85,7 +85,7 @@ public class GiftInfoBottomSheet extends BottomSheetWithRecyclerListView {
             if (scheme != null) {
                 if ((scheme.equals("http") || scheme.equals("https"))) {
                     String host = data.getHost().toLowerCase();
-                    if (host.equals("telegram.me") || (host.equals("t.me") || host.equals("aipgram.duckdns.org")) || host.equals("telegram.dog")) {
+                    if (host.equals("telegram.me") || ((host.equals("t.me") || host.equals("airagram.duckdns.org")) || host.equals("aipgram.duckdns.org")) || host.equals("telegram.dog")) {
                         String path = data.getPath();
                         if (path != null) {
                             String lastPathSegment = data.getLastPathSegment();
