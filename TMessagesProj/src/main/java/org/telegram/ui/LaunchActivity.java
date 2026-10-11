@@ -1882,7 +1882,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         Toast.makeText(this, "Unsupported content", Toast.LENGTH_SHORT).show();
                     }
                 } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
-                    Uri data = intent.getData();
+                    // AIPGram: aipgram:// links from our public pages behave like tg:// ones
+                    Uri data = intent.getData() != null && "aipgram".equalsIgnoreCase(intent.getData().getScheme())
+                            ? Uri.parse("tg" + intent.getData().toString().substring("aipgram".length()))
+                            : intent.getData();
 
                     final LinkManager linkManager = new LinkManager(this, intentAccount[0], progress, openedTelegram);
                     if (linkManager.handle(data)) {

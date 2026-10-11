@@ -118,6 +118,15 @@ edit("TMessagesProj/src/main/AndroidManifest.xml", (t) => {
     (m, indent) => m + `${indent}<data android:host="${LINK_HOST}" android:scheme="http" />\n${indent}<data android:host="${LINK_HOST}" android:scheme="https" />\n`,
     "t.me intent filter");
 });
+// aipgram:// (the scheme of our public link pages; gramsrv reserves tg) opens like tg://
+edit("TMessagesProj/src/main/AndroidManifest.xml", (t) => t.includes('android:scheme="aipgram"') ? t :
+  mustReplace(t, /( *)<data android:scheme="tg" \/>\n/, (m, indent) => m + `${indent}<data android:scheme="aipgram" />\n`, "tg scheme filter"));
+edit("TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java", (t) => t.includes('"aipgram".equalsIgnoreCase') ? t :
+  mustReplace(t, /( *)Uri data = intent\.getData\(\);\n/, (m, indent) =>
+    `${indent}// AIPGram: aipgram:// links from our public pages behave like tg:// ones\n` +
+    `${indent}Uri data = intent.getData() != null && "aipgram".equalsIgnoreCase(intent.getData().getScheme())\n` +
+    `${indent}        ? Uri.parse("tg" + intent.getData().toString().substring("aipgram".length()))\n` +
+    `${indent}        : intent.getData();\n`, "LaunchActivity data"));
 for (const file of walkJava(path.join(root, "TMessagesProj/src/main/java"))) {
   edit(path.relative(root, file), (t) => {
     if (!t.includes('"t.me"') || t.includes(`"${LINK_HOST}".equals`) || t.includes(`.equals("${LINK_HOST}")`)) return t;
