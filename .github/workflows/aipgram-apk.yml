@@ -5,6 +5,9 @@ on:
     branches: [master]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -67,3 +70,11 @@ jobs:
           name: airagram-android-apk
           path: artifacts/Airagram.apk
           if-no-files-found: error
+
+      # The download page on the server pulls the newest file from this release (see ops/server/sync_downloads.py).
+      - name: Publish to the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view latest >/dev/null 2>&1 || gh release create latest --title "Airagram — последняя сборка" --notes "Автоматическая сборка" --latest
+          gh release upload latest artifacts/Airagram.apk --clobber
