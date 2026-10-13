@@ -9,8 +9,8 @@ const APP_ID = 90000001;
 const APP_HASH = "6f0c7ab1a4e3d2b58c91f07e5d34a2c1"; // gramsrv does not check it; any 32 hex chars
 const PACKAGE = "org.airagram.messenger";
 const APP_NAME = "Airagram";
-const LINK_HOST = "airagram.duckdns.org"; // public links (t.me on Telegram)
-const OLD_LINK_HOST = "aipgram.duckdns.org"; // previous domain, still opened in the app
+const LINK_HOST = "airagram.top"; // public links (t.me on Telegram)
+const OLD_LINK_HOST = "airagram.duckdns.org"; // previous domain, still opened in the app
 const RSA_KEY = [
   "-----BEGIN RSA PUBLIC KEY-----",
   "MIIBCgKCAQEAuwI+651GHh3hcvtJZmZbFw6KvldOtxcsdBe95Woa6mnRoIz4xQBq",

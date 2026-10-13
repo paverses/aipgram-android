@@ -264,6 +264,8 @@
                 <data android:host="telegram.dog" android:scheme="https" />
                 <data android:host="t.me" android:scheme="http" />
                 <data android:host="t.me" android:scheme="https" />
+                <data android:host="airagram.top" android:scheme="http" />
+                <data android:host="airagram.top" android:scheme="https" />
                 <data android:host="airagram.duckdns.org" android:scheme="http" />
                 <data android:host="airagram.duckdns.org" android:scheme="https" />
                 <data android:host="aipgram.duckdns.org" android:scheme="http" />

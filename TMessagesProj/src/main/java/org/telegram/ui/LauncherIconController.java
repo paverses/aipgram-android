@@ -9,13 +9,17 @@ import org.telegram.messenger.R;
 
 public class LauncherIconController {
     public static void tryFixLauncherIconIfNeeded() {
+        // Airagram has one icon: a Telegram alternative chosen before the update is switched back to it, and the
+        // default alias is re-enabled if nothing is enabled. The aliases stay declared so setIcon can disable them.
         for (LauncherIcon icon : LauncherIcon.values()) {
-            if (isEnabled(icon)) {
+            if (icon != LauncherIcon.DEFAULT && isEnabled(icon)) {
+                setIcon(LauncherIcon.DEFAULT);
                 return;
             }
         }
-
-        setIcon(LauncherIcon.DEFAULT);
+        if (!isEnabled(LauncherIcon.DEFAULT)) {
+            setIcon(LauncherIcon.DEFAULT);
+        }
     }
 
     public static boolean isEnabled(LauncherIcon icon) {

@@ -235,7 +235,7 @@ public final class ProxySettings {
                 }
 
                 host = host.toLowerCase();
-                if (!host.equals("telegram.me") && !((host.equals("t.me") || host.equals("airagram.duckdns.org")) || host.equals("aipgram.duckdns.org")) && !host.equals("telegram.dog")) {
+                if (!host.equals("telegram.me") && !(((host.equals("t.me") || host.equals("airagram.top")) || host.equals("airagram.duckdns.org")) || host.equals("aipgram.duckdns.org")) && !host.equals("telegram.dog")) {
                     return null;
                 }
 
